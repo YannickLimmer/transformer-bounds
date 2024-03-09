@@ -25,13 +25,14 @@ def _compute_etas(
                     if dt_sum(cur_arrs[i][row]) == 0:
                         min_val = max(min_val, 1)
                 max_val = cur_targets[i][col]
-                for val in range(min_val, max_val + 1):
+                vals = np.arange(min_val, max_val + 1, dtype=np.int16)
+                for iv in range(len(vals)):
                     next_arr = cur_arrs[i].copy()
-                    next_arr[row][col] = val
+                    next_arr[row][col] = vals[iv]
                     next_arrs.append(next_arr)
 
                     next_target = cur_targets[i].copy()
-                    next_target[col] -= val
+                    next_target[col] -= vals[iv]
                     next_targets.append(next_target)
             cur_arrs = next_arrs
             cur_targets = next_targets
@@ -72,16 +73,17 @@ def _compute_zetas(
                         min_val = max(min_val, 1)
 
                 max_val = min(cur_targets[i][col] // factor, cur_allowance[i])
-                for val in range(min_val, max_val + 1):
+                vals = np.arange(min_val, max_val + 1, dtype=np.int16)
+                for iv in range(len(vals)):
                     next_arr = cur_arrs[i].copy()
-                    next_arr[row][col] = val
+                    next_arr[row][col] = vals[iv]
                     next_arrs.append(next_arr)
 
                     next_target = cur_targets[i].copy()
-                    next_target[col] -= val * factor
+                    next_target[col] -= vals[iv] * factor
                     next_targets.append(next_target)
 
-                    next_allowance.append(np.int16(cur_allowance[i] - val))
+                    next_allowance.append(cur_allowance[i] - vals[iv])
 
             cur_arrs = next_arrs
             cur_targets = next_targets

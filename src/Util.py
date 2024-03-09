@@ -18,7 +18,7 @@ dt_factorial = njit(_dt_factorial)
 
 @njit
 def dt_sum(arr: nb.int16[::1]) -> nb.int16:
-    res: nb.int64 = 0
+    res: nb.int16 = 0
     for i in range(len(arr)):
         res += arr[i]
     return res
