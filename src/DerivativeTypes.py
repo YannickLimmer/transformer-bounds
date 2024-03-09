@@ -33,7 +33,7 @@ generate_derivative_types = njit(_generate_derivative_types)
 
 def _generate_derivative_subtypes(n: np.int16, k: np.int16) -> List[nb.int16[::1]]:
 
-    result = List.empty_list(nb.int16[:])
+    result = List.empty_list(nb.int16[::1])
     for level in range(1, n + 1):
         der_types = generate_derivative_types(np.int16(level), k)
         for i in range(len(der_types)):

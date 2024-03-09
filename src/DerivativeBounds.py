@@ -3,7 +3,8 @@ from numba.typed.typeddict import Dict
 import numba as nb
 from numba import njit, prange
 
-from src.Combinatorics import compute_etas, compute_sorted_zetas
+from src.Combinatorics import compute_etas, compute_sorted_zetas, number_of_representations
+from src.DerivativeTypes import generate_derivative_subtypes, _generate_derivative_subtypes
 from src.Hashing import der_type_to_hash
 from src.Util import dt_factorial, dt_sum
 
@@ -91,12 +92,36 @@ def _compute_cumulated_g_bounds(
         g_dbounds: DBoundDict,
 ) -> nb.int64:
     cumulated_g_bounds: nb.float64 = 0
-    for j in prange(1, n + 1):
+    js = np.arange(1, n, dtype=np.int16)
+    for j in prange(0, len(js)):
         cumulated_g_bounds += compute_cumulated_g_bounds_for_j(
-            n, m, k, np.int16(j), h_der_type, f_der_type, g_dbounds
+            n, m, k, js[j], h_der_type, f_der_type, g_dbounds
         )
     return cumulated_g_bounds
 
 
 compute_cumulated_g_bounds = njit(_compute_cumulated_g_bounds, parallel=False)
 
+
+def _compute_bound_for_alpha(
+        n: np.int16,
+        m: np.int16,
+        k: np.int16,
+        h_der_type: nb.int16[::1],
+        f_dbounds: DBoundDict,
+        g_dbounds: DBoundDict,
+):
+    result: nb.float64 = 0
+
+    f_der_types = generate_derivative_subtypes(n, m)
+
+    for i in prange(len(f_der_types)):
+        f_dbound = f_dbounds[der_type_to_hash(f_der_types[i], n, m)]
+        representations_for_der_type = number_of_representations(f_der_types[i])
+        cumulated_g_bounds = compute_cumulated_g_bounds(n, m, k, h_der_type, f_der_types[i], g_dbounds)
+        result += representations_for_der_type * f_dbound * cumulated_g_bounds
+
+    return result
+
+
+compute_bound_for_alpha = njit(_compute_bound_for_alpha, parallel=True)

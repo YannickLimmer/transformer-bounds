@@ -48,17 +48,20 @@ def binomial_coefficient(n: nb.int64, k: nb.int64) -> nb.int64:
     return result
 
 
-def _fill_zeros(arrs: List[nb.int16[::1]], k: np.int16):
-    new_arrs = List(np.zeros((len(arrs), k), dtype=np.int16))
+def _fill_zeros(arrs: List[nb.int16[::1]], k: np.int16) -> List[nb.int16[::1]]:
+    new_arrs = List.empty_list(nb.int16[::1])
     for i in range(len(arrs)):
-        new_arrs[i][:arrs[i].shape[0]] = arrs[i]
+        new_arr = np.zeros(k, dtype=np.int16)
+        for j in range(arrs[i].shape[0]):
+            new_arr[j] = arrs[i][j]
+        new_arrs.append(new_arr)
     return new_arrs
 
 
 fill_zeros = njit(_fill_zeros)
 
 
-def _remove_tail(arrs: List[nb.int16[::1]], n: np.int16):
+def _remove_tail(arrs: List[nb.int16[::1]], n: np.int16) -> List[nb.int16[::1]]:
     new_arrs = List(np.zeros((len(arrs), n), dtype=np.int16))
     for i in range(len(arrs)):
         new_arrs[i] = arrs[i][:n]
