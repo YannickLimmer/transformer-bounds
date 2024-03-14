@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 import numpy as np
 from prettytable import PrettyTable
 
@@ -17,15 +19,15 @@ def der_type_to_str(der_type: np.array):
     return result + ")"
 
 
-def pretty_results(n: int, k: int, results: DBoundDict) -> PrettyTable:
+def pretty_results(n: int, k: int, results: Dict[str, DBoundDict]) -> PrettyTable:
 
     der_types = generate_derivative_subtypes(np.int16(n), np.int16(k))
-    table = PrettyTable(["Type"] + ['Bound'], align="l")
+    result_names = list(results.keys())
+    table = PrettyTable(["Type"] + result_names, align="l")
 
     for der_type in der_types:
         der_type_hash = der_type_to_hash(der_type, np.int16(n), np.int16(k))
-        if der_type_hash in results.keys():
-            table.add_row([der_type_to_str(der_type), f"{results[der_type_hash]:0.2f}"])
+        table.add_row([der_type_to_str(der_type)] + [f"{results[n].get(der_type_hash, np.nan):_.2f}" for n in result_names])
 
     return table
 
