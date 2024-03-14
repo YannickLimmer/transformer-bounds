@@ -92,7 +92,7 @@ def _compute_cumulated_g_bounds(
         g_dbounds: DBoundDict,
 ) -> nb.int64:
     cumulated_g_bounds: nb.float64 = 0
-    js = np.arange(1, n, dtype=np.int16)
+    js = np.arange(1, n+1, dtype=np.int16)
     for j in prange(0, len(js)):
         cumulated_g_bounds += compute_cumulated_g_bounds_for_j(
             n, m, k, js[j], h_der_type, f_der_type, g_dbounds

@@ -69,3 +69,16 @@ def _remove_tail(arrs: List[nb.int16[::1]], n: np.int16) -> List[nb.int16[::1]]:
 
 
 remove_tail = njit(_remove_tail)
+
+
+@njit
+def double_factorial(n: nb.int16) -> nb.int64:
+    """
+    Compute the double factorial of a non-negative integer n.
+    """
+    result: nb.int64 = 1
+    for i in range(n, 0, -2):
+        result *= i
+
+    return result
+
