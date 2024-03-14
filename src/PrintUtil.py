@@ -27,7 +27,11 @@ def pretty_results(n: int, k: int, results: Dict[str, DBoundDict]) -> PrettyTabl
 
     for der_type in der_types:
         der_type_hash = der_type_to_hash(der_type, np.int16(n), np.int16(k))
-        table.add_row([der_type_to_str(der_type)] + [f"{results[n].get(der_type_hash, np.nan):_.2f}" for n in result_names])
+        table.add_row([der_type_to_str(der_type)] + [(
+            f"{results[n].get(der_type_hash, np.nan):_.2f}"
+            if results[n].get(der_type_hash, np.nan) < 1e+3
+            else f"{results[n].get(der_type_hash, np.nan):_.2E}"
+        ) for n in result_names])
 
     return table
 
