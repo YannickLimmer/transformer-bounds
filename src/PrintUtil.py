@@ -9,10 +9,12 @@ from src.Hashing import der_type_to_hash
 def der_type_to_str(der_type: np.array):
     result = "("
     for i, val in enumerate(der_type):
-        result += f" {val}," if i > 0 else f"{val},"
+        result += f", {val}" if i > 0 else f"{val}"
         if val == 0:
+            if i < len(der_type) - 1:
+                result += ", ..."
             break
-    return result + " ...)"
+    return result + ")"
 
 
 def pretty_results(n: int, k: int, results: DBoundDict) -> PrettyTable:
