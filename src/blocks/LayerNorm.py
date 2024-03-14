@@ -67,7 +67,7 @@ def der_bounds_g_circ_variance(n: nb.int16, k: nb.int16, domain_bound: nb.float6
 
 @njit
 def der_bounds_layer_norm(n: nb.int16, k: nb.int16, domain_bound: nb.float64, weights: nb.float64):
-    g_circ_variance_bounds = der_bounds_g_circ_variance(n-1, k, domain_bound, weights)
+    g_circ_variance_bounds = der_bounds_g_circ_variance(n, k, domain_bound, weights)
 
     der_types = generate_derivative_subtypes(n, k)
     hashes = der_types_to_hashes(der_types, n, k)
@@ -79,9 +79,9 @@ def der_bounds_layer_norm(n: nb.int16, k: nb.int16, domain_bound: nb.float64, we
                 if der_types[j][i] > 0:
                     cur_type = der_types[j].copy()
                     cur_type[i] -= 1
-                    score = der_type_to_hash(np.sort(cur_type)[::-1], n - 1, k)
+                    score = der_type_to_hash(np.sort(cur_type)[::-1], n, k)
                     bounds[j] += der_types[j][i] * g_circ_variance_bounds[score]
         else:
-            bounds[j] += 1
+            bounds[j] += domain_bound * g_circ_variance_bounds[der_type_to_hash(der_types[j], n, k)]
 
     return make_dbound_dict(hashes, bounds)
