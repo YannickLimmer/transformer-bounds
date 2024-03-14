@@ -82,3 +82,4 @@ def double_factorial(n: nb.int16) -> nb.int64:
 
     return result
 
+
