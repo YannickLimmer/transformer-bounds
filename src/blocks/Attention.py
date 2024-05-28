@@ -2,7 +2,7 @@ import numba as nb
 import numpy as np
 from numba import njit
 
-from src.DerivativeBounds import DBoundDict, make_dbound_dict, compute_bound_for_alpha
+from src.DerivativeBounds import DBoundDict, make_dbound_dict, compute_bound_for_alpha, adjust_bounds
 from src.DerivativeTypes import generate_derivative_subtypes
 from src.Hashing import der_types_to_hashes, der_type_to_hash
 from src.Util import factorial, dt_sum, dt_factorial
@@ -32,13 +32,14 @@ def der_bounds_dp(
         max_weight_k: nb.float64,
         max_weight_q: nb.float64,
         domain_bound: nb.float64,
+        by_level: bool = False,
 ) -> DBoundDict:
     der_types = generate_derivative_subtypes(n, k)
     hashes = der_types_to_hashes(der_types, n, k)
     bounds = np.zeros(len(hashes), dtype=np.float64)
     for i in range(len(der_types)):
         bounds[i] = der_bound_dp(der_types[i], ndim_k, max_weight_k, max_weight_q, domain_bound)
-    return make_dbound_dict(hashes, bounds)
+    return make_dbound_dict(hashes, adjust_bounds(bounds, der_types, by_level))
 
 
 @njit
@@ -60,6 +61,7 @@ def der_bounds_softmax_circ_dp(
         max_weight_k: nb.float64,
         max_weight_q: nb.float64,
         domain_bound: nb.float64,
+        by_level: bool = False,
 ) -> DBoundDict:
     k = sequence_length * input_dim
     der_types = generate_derivative_subtypes(n, k)
@@ -67,11 +69,11 @@ def der_bounds_softmax_circ_dp(
     bounds = np.zeros(len(hashes), dtype=np.float64)
 
     softmax_bounds = der_bounds_softmax(n, k)
-    dp_bounds = der_bounds_dp(n, k, ndim_k, max_weight_k, max_weight_q, domain_bound)
+    dp_bounds = der_bounds_dp(n, k, ndim_k, max_weight_k, max_weight_q, domain_bound, by_level)
 
     for i in range(len(der_types)):
-        bounds[i] = compute_bound_for_alpha(n, sequence_length, k, der_types[i], softmax_bounds, dp_bounds)
-    return make_dbound_dict(hashes, bounds)
+        bounds[i] = compute_bound_for_alpha(n, sequence_length, k, der_types[i], softmax_bounds, dp_bounds) / ndim_k
+    return make_dbound_dict(hashes, adjust_bounds(bounds, der_types, by_level))
 
 
 @njit
@@ -84,6 +86,7 @@ def der_bounds_attention(
         max_weight_q: nb.float64,
         max_weight_v: nb.float64,
         domain_bound: nb.float64,
+        by_level: bool = False,
 ):
     softmax_circ_dp_bounds = der_bounds_softmax_circ_dp(
         n,
@@ -93,6 +96,7 @@ def der_bounds_attention(
         max_weight_k,
         max_weight_q,
         domain_bound,
+        by_level,
     )
 
     k = sequence_length * input_dim
@@ -112,7 +116,7 @@ def der_bounds_attention(
         bounds[j] += domain_bound * softmax_circ_dp_bounds[der_type_to_hash(der_types[j], n, k)]
         bounds[j] *= k * max_weight_v
 
-    return make_dbound_dict(hashes, bounds)
+    return make_dbound_dict(hashes, adjust_bounds(bounds, der_types, by_level))
 
 @njit
 def der_bounds_multi_head_attention(
@@ -126,6 +130,7 @@ def der_bounds_multi_head_attention(
         max_weight_v: nb.float64,
         max_weight_w: nb.float64,
         domain_bound: nb.float64,
+        by_level: bool = False,
 ):
     softmax_circ_dp_bounds = der_bounds_softmax_circ_dp(
         n,
@@ -135,6 +140,7 @@ def der_bounds_multi_head_attention(
         max_weight_k,
         max_weight_q,
         domain_bound,
+        by_level,
     )
 
     k = sequence_length * input_dim
@@ -154,4 +160,4 @@ def der_bounds_multi_head_attention(
         bounds[j] += domain_bound * softmax_circ_dp_bounds[der_type_to_hash(der_types[j], n, k)]
         bounds[j] *= k * max_weight_v * dt_factorial(der_types[j]) * ndim_v * max_weight_w
 
-    return make_dbound_dict(hashes, bounds)
+    return make_dbound_dict(hashes, adjust_bounds(bounds, der_types, by_level))

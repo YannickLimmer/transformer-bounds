@@ -2,6 +2,7 @@ import numpy as np
 from numba.typed.typeddict import Dict
 import numba as nb
 from numba import njit, prange
+from numba.typed import List
 
 from src.Combinatorics import compute_etas, compute_sorted_zetas, number_of_representations
 from src.DerivativeTypes import generate_derivative_subtypes, _generate_derivative_subtypes
@@ -19,6 +20,21 @@ def _make_dbound_dict(hashes: nb.int64[::1], bounds: nb.int64[::1]) -> DBoundDic
 
 
 make_dbound_dict = njit(_make_dbound_dict)
+
+
+@nb.njit
+def adjust_bounds(bounds: nb.float64[::1], dtypes: List[nb.int16[::1]], by_level: bool = False) -> nb.float64[::1]:
+    if not by_level:
+        return bounds
+    result = np.zeros(len(bounds), dtype=np.float64)
+    n = len(dtypes)
+
+    for i in range(n):
+        for j in range(n):
+            if dtypes[i].sum() <= dtypes[j].sum():
+                result[j] = max(result[j], bounds[i])
+
+    return result
 
 
 def _compute_cumulated_g_bounds_for_zeta(
